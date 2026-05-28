@@ -1,0 +1,178 @@
+<?php
+
+namespace App\Filament\Pages;
+use BackedEnum;
+use UnitEnum;
+use Filament\Support\Icons\Heroicon;
+use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\File;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Gate;
+use Filament\Pages\Page;
+
+use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
+
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Concerns\InteractsWithTable;
+
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+
+class DatabaseBackup extends Page implements HasTable
+{
+    use InteractsWithTable;
+
+    protected string $view = 'filament.pages.database-backup';
+    protected static ?string $navigationLabel = 'Backup Database';
+    protected static ?string $title = 'Backup Database';
+    protected static string|UnitEnum|null $navigationGroup = 'Sistem';
+
+    public static function canAccess(): bool
+    {
+        return auth()->check() && auth()->user()->hasPermission('ViewAny:DatabaseBackup');
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->records(fn () => collect(File::files(storage_path('app/backups')))
+            ->sortByDesc(fn ($file) => $file->getCTime())
+            ->map(fn ($file) => [
+                'name' => $file->getFilename(),
+                'path' => $file->getRealPath(),
+                'size' => round($file->getSize() / 1024 / 1024, 2) . ' MB',
+                'date' => date('Y-m-d H:i:s', $file->getCTime()),
+            ]))
+            ->columns([
+                TextColumn::make('name')
+                    ->label('Nama File')
+                    ->searchable(),
+
+                TextColumn::make('size')
+                    ->label('Ukuran'),
+
+                TextColumn::make('date')
+                    ->label('Tanggal Backup'),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function ($records) {
+                            collect($records)->each(fn ($record) => File::delete($record['path']));
+                            $this->redirect(request()->header('Referer') ?? url()->current()); // refresh table
+                        }),
+                ])
+                ->visible(fn () => auth()->check() && auth()->user()->hasPermission('Delete:DatabaseBackup')),
+            ])
+            ->actions([
+                Action::make('download')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('primary')
+                    ->url(fn ($record) => route('backup.download', $record['name']))
+                    ->openUrlInNewTab(),
+
+                Action::make('delete')
+                    ->icon('heroicon-o-trash')
+                    ->requiresConfirmation()
+                    ->color('danger')
+                    ->visible(fn ($record) => auth()->check() && auth()->user()->hasPermission('Delete:DatabaseBackup'))
+                    ->action(function ($record) {
+                        File::delete($record['path']);
+                        $this->redirect(request()->header('Referer') ?? url()->current()); // refresh table
+                    }),
+            ]);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('backup')
+                ->label('Backup Database')
+                ->icon('heroicon-o-cloud-arrow-down')
+                ->requiresConfirmation()
+                ->visible(fn () =>
+                    auth()->check() &&
+                    auth()->user()->hasPermission('Create:DatabaseBackup')
+                )
+                ->action(fn () => $this->backupDatabase()),
+        ];
+    }
+
+    public function backupDatabase(): void
+    {
+        try {
+
+            $dbName = config('database.connections.mysql.database');
+            $dbUser = config('database.connections.mysql.username');
+            $dbPass = config('database.connections.mysql.password');
+            $dbHost = config('database.connections.mysql.host');
+
+            $backupDir = storage_path('app/backups');
+
+            if (! File::exists($backupDir)) {
+                File::makeDirectory($backupDir, 0755, true);
+            }
+
+            $timestamp = now()->format('Y-m-d_H-i-s');
+
+            $gzFile = "{$backupDir}/backup_{$timestamp}.sql.gz";
+
+            $command = sprintf(
+                'mysqldump --host=%s --user=%s %s %s | gzip > %s',
+                escapeshellarg($dbHost),
+                escapeshellarg($dbUser),
+                $dbPass
+                    ? '--password=' . escapeshellarg($dbPass)
+                    : '',
+                escapeshellarg($dbName),
+                escapeshellarg($gzFile),
+            );
+
+            exec($command, $output, $result);
+
+            if ($result !== 0 || ! File::exists($gzFile)) {
+
+                Notification::make()
+                    ->title('Backup database gagal')
+                    ->danger()
+                    ->send();
+
+                return;
+            }
+
+            $this->cleanOldBackups($backupDir);
+
+            Notification::make()
+                ->title('Backup database berhasil dibuat')
+                ->success()
+                ->send();
+
+        } catch (\Throwable $e) {
+
+            Notification::make()
+                ->title('Error backup database')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
+    }
+
+    private function cleanOldBackups(string $backupDir): void
+    {
+        $files = collect(File::files($backupDir))
+            ->filter(fn ($file) =>
+                str($file->getFilename())->startsWith('backup_')
+            )
+            ->sortByDesc(fn ($file) => $file->getMTime());
+
+        $files
+            ->slice(10)
+            ->each(fn ($file) =>
+                File::delete($file->getRealPath())
+            );
+    }
+}

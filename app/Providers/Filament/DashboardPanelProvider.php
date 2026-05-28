@@ -1,0 +1,135 @@
+<?php
+
+namespace App\Providers\Filament;
+
+use App\Models\Setting;
+use App\Filament\Pages\Profile;
+use App\Filament\Pages\Settings;
+use App\Filament\Pages\DatabaseBackup;
+
+use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Middleware\AuthenticateSession;
+use Filament\Http\Middleware\DisableBladeIconComponents;
+use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Pages\Dashboard;
+use Filament\Panel;
+use Filament\PanelProvider;
+use Filament\Support\Colors\Color;
+use Filament\Widgets\AccountWidget;
+use Filament\Widgets\FilamentInfoWidget;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
+use DiogoGPinto\AuthUIEnhancer\AuthUIEnhancerPlugin;
+use Filament\Support\Icons\Heroicon;
+use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\MenuItem;
+use Filament\Pages\BasePage;
+use Filament\Support\Enums\Alignment;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Cache;
+
+class DashboardPanelProvider extends PanelProvider
+{
+    public function panel(Panel $panel): Panel
+    {
+        $setting = null;
+
+        if (
+            ! app()->runningInConsole() &&
+            Schema::hasTable('settings')
+        ) {
+            $setting = Setting::first();
+        }
+
+        $themeColor = $setting?->theme_color ?? '#00ff91';
+
+        // Set form actions alignment to the end (right side)
+        BasePage::formActionsAlignment(Alignment::End);
+
+        return $panel
+            ->default()
+            ->id('dashboard')
+            ->path('/')
+            ->databaseNotifications()
+            ->viteTheme('resources/css/filament/dashboard/theme.css')
+            ->login(\App\Filament\Pages\Auth\Login::class)
+            ->favicon(safe_image_url($setting?->app_favicon))
+            ->brandLogo(fn () => view('components.brand-logo', [
+                'setting' => $setting,
+            ]))
+            // ->brandLogoHeight('2rem')
+            ->colors([
+                'primary' => Color::hex($themeColor),
+            ])
+            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
+            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
+            ->plugins([
+                AuthUIEnhancerPlugin::make()
+                    ->showEmptyPanelOnMobile(false)
+                    ->formPanelPosition('right')
+                    ->formPanelWidth('30%')
+                    ->emptyPanelBackgroundImageOpacity('80%')
+                    ->emptyPanelBackgroundImageUrl(safe_image_url($setting?->app_background_login_image)),
+            ])
+            ->navigationGroups([
+                NavigationGroup::make('Manajemen Pengguna')
+                    ->icon('heroicon-o-user-group'),
+                NavigationGroup::make('Sistem')
+                    ->icon('heroicon-o-cog-6-tooth'),
+            ])
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label('Profile')
+                    ->url(fn (): string => Profile::getUrl())
+                    ->icon(Heroicon::OutlinedUser),
+                MenuItem::make()
+                    ->label('Pengaturan')
+                    ->url(fn (): string => Settings::getUrl())
+                    ->icon(Heroicon::OutlinedCog6Tooth)
+                    ->visible(fn () => auth()->check() && auth()->user()?->hasPermission('ViewAny:Setting')),
+            ])
+            ->pages([
+                Dashboard::class,
+            ])
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            ->widgets([
+                AccountWidget::class,
+                FilamentInfoWidget::class,
+            ])
+            ->middleware([
+                EncryptCookies::class,
+                AddQueuedCookiesToResponse::class,
+                StartSession::class,
+                AuthenticateSession::class,
+                ShareErrorsFromSession::class,
+                VerifyCsrfToken::class,
+                SubstituteBindings::class,
+                DisableBladeIconComponents::class,
+                DispatchServingFilamentEvent::class,
+            ])
+            ->authMiddleware([
+                Authenticate::class,
+            ])
+            ->renderHook(
+                PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
+                fn (): HtmlString => new HtmlString(
+                    view('components.social-links', [
+                        'setting' => \App\Models\Setting::query()->first(),
+                    ])->render()
+                )
+            )
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): HtmlString => new HtmlString('
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+                    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+                ')
+            );
+    }
+}

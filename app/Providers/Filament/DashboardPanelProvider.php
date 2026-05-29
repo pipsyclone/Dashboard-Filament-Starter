@@ -2,19 +2,25 @@
 
 namespace App\Providers\Filament;
 
-use App\Models\Setting;
+use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Profile;
 use App\Filament\Pages\Settings;
-use App\Filament\Pages\DatabaseBackup;
-
+use App\Models\Setting;
+use DiogoGPinto\AuthUIEnhancer\AuthUIEnhancerPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
+use Filament\Navigation\NavigationGroup;
+use Filament\Pages\BasePage;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Icons\Heroicon;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -22,17 +28,10 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\View\Middleware\ShareErrorsFromSession;
-use DiogoGPinto\AuthUIEnhancer\AuthUIEnhancerPlugin;
-use Filament\Support\Icons\Heroicon;
-use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\MenuItem;
-use Filament\Pages\BasePage;
-use Filament\Support\Enums\Alignment;
-use Filament\View\PanelsRenderHook;
-use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\HtmlString;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Lunaweb\RecaptchaV3\Facades\RecaptchaV3;
 
 class DashboardPanelProvider extends PanelProvider
 {
@@ -58,7 +57,7 @@ class DashboardPanelProvider extends PanelProvider
             ->path('/')
             ->databaseNotifications()
             ->viteTheme('resources/css/filament/dashboard/theme.css')
-            ->login(\App\Filament\Pages\Auth\Login::class)
+            ->login(Login::class)
             ->favicon(safe_image_url($setting?->app_favicon))
             ->brandLogo(fn () => view('components.brand-logo', [
                 'setting' => $setting,
@@ -116,11 +115,27 @@ class DashboardPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
+            ->plugins([
+                AuthUIEnhancerPlugin::make()
+                    ->showEmptyPanelOnMobile(false)
+                    ->formPanelPosition('right')
+                    ->formPanelWidth('50%')
+                    ->emptyPanelBackgroundImageOpacity('80%')
+                    ->emptyPanelBackgroundImageUrl(safe_image_url($setting?->app_background_login_image)),
+            ])
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): HtmlString => new HtmlString(
+                    request()->routeIs('filament.dashboard.auth.*')
+                        ? RecaptchaV3::initJs()
+                        : ''
+                )
+            )
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
                 fn (): HtmlString => new HtmlString(
                     view('components.social-links', [
-                        'setting' => \App\Models\Setting::query()->first(),
+                        'setting' => Setting::query()->first(),
                     ])->render()
                 )
             )

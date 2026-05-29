@@ -20,11 +20,11 @@ class UserSeeder extends Seeder
     {
         // Buat Admin User
         $admin = User::firstOrCreate(
-            ['email' => 'admin@example.com'],
+            ['email' => 'superadmin@example.com'],
             [
-                'name' => 'Admin User',
-                'username' => 'admin',
-                'email' => 'admin@example.com',
+                'name' => 'Superadmin',
+                'username' => 'superadmin',
+                'email' => 'superadmin@example.com',
                 'phone' => '1234567890',
                 'password' => Hash::make('123'),
             ]

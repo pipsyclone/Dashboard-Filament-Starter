@@ -15,6 +15,6 @@ class SettingPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('ViewAny:Setting');
+        return auth()->check() && $user->hasPermission('ViewAny:Setting');
     } 
 }

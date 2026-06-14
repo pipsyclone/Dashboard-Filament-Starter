@@ -18,6 +18,35 @@ class RolesForm
 {
     public static function configure(Schema $schema): Schema
     {
+        $permissionSections = [];
+        try {
+            $permissions = Permissions::all();
+            $groupedPermissions = $permissions->groupBy(function ($permission) {
+                $parts = explode(':', $permission->name);
+                return $parts[1] ?? 'Lainnya';
+            });
+
+            foreach ($groupedPermissions as $resource => $perms) {
+                // Buat judul yang lebih ramah dibaca, misal 'DatabaseBackup' jadi 'Database Backup'
+                $title = preg_replace('/(?<!^)[A-Z]/', ' $0', $resource);
+                
+                $permissionSections[] = Section::make($title)
+                    ->schema([
+                        CheckboxList::make("permissions_" . strtolower($resource))
+                            ->relationship(
+                                name: 'permissions',
+                                titleAttribute: 'description',
+                                modifyQueryUsing: fn ($query) =>
+                                    $query->where('name', 'like', "%:{$resource}")
+                            )
+                            ->bulkToggleable()
+                            ->columns(2),
+                    ]);
+            }
+        } catch (\Exception $e) {
+            // Abaikan jika tabel permissions belum ada (misal saat proses migrate awal)
+        }
+
         return $schema
             ->components([
                 Section::make('Informasi Umum')
@@ -27,15 +56,11 @@ class RolesForm
                             ->columns(2)
                             ->schema([
                                 TextInput::make('name')
-                                    ->label('Nama Role')
+                                    ->label('Role Name')
                                     ->placeholder('contoh: Super Admin, Admin, Guest, Visitor, dll.')
                                     ->required()
                                     ->unique(ignoreRecord: true)
-                                    ->helperText('Nama role yang akan ditampilkan di aplikasi.')
-                                    ->validationMessages([
-                                        'required' => 'Nama role wajib diisi.',
-                                        'unique' => 'Nama role sudah digunakan. Silakan gunakan nama lain.',
-                                    ]),
+                                    ->helperText('Name of the role that will be displayed in the application.'),
                                 TextInput::make('slug')
                                     ->label('Slug Role')
                                     ->placeholder('contoh: super_admin, admin, guest, visitor, dll.')
@@ -46,80 +71,19 @@ class RolesForm
                                         $set('slug', Str::of($state)->slug('_')->toString());
                                     })
                                     ->regex('/^[a-z0-9_]+$/')
-                                    ->helperText('Hanya huruf kecil, angka, dan underscore yang diperbolehkan.')
-                                    ->validationMessages([
-                                        'required' => 'Slug role wajib diisi.',
-                                        'unique' => 'Slug role sudah digunakan. Silakan gunakan slug lain.',
-                                        'regex' => 'Slug hanya boleh mengandung huruf kecil, angka, dan underscore.',
-                                    ]),
+                                    ->helperText('Only lowercase letters, numbers, and underscores are allowed.'),
                             ]),
                         Textarea::make('description')
-                            ->label('Deskripsi Role')
-                            ->placeholder('contoh: Lihat, Hapus, edit, view, dll.')
+                            ->label('Role Description')
+                            ->placeholder('Example: View, Delete, Edit, etc.')
                             ->columnSpanFull(),
                     ]),
-                Section::make('Hak Akses')
+                Section::make('Access Permissions')
                     ->columnSpanFull()
                     ->schema([
                         Grid::make()
                             ->columns(3)
-                            ->schema([
-                                Section::make('Pengaturan Aplikasi')
-                                    ->schema([
-                                        CheckboxList::make('permissions_settings')
-                                            ->relationship(
-                                                name: 'permissions',
-                                                titleAttribute: 'description',
-                                                modifyQueryUsing: fn ($query) =>
-                                                    $query->where('name', 'like', '%:Setting')
-                                            )
-                                            ->columns(2),
-                                    ]),
-                                Section::make('Data Pengguna')
-                                    ->schema([
-                                        CheckboxList::make('permissions_users')
-                                            ->relationship(
-                                                name: 'permissions',
-                                                titleAttribute: 'description',
-                                                modifyQueryUsing: fn ($query) =>
-                                                    $query->where('name', 'like', '%:User')
-                                            )
-                                            ->columns(2),
-                                    ]),
-                                Section::make('Data Roles')
-                                    ->schema([
-                                        CheckboxList::make('permissions_roles')
-                                            ->relationship(
-                                                name: 'permissions',
-                                                titleAttribute: 'description',
-                                                modifyQueryUsing: fn ($query) =>
-                                                    $query->where('name', 'like', '%:Role')
-                                            )
-                                            ->columns(2),
-                                    ]),
-                                Section::make('Backup Database')
-                                    ->schema([
-                                        CheckboxList::make('permissions_backup')
-                                            ->relationship(
-                                                name: 'permissions',
-                                                titleAttribute: 'description',
-                                                modifyQueryUsing: fn ($query) =>
-                                                    $query->where('name', 'like', '%:DatabaseBackup')
-                                            )
-                                            ->columns(2),
-                                    ]),
-                                Section::make('Log Aktivitas')
-                                    ->schema([
-                                        CheckboxList::make('permissions_log_aktivitas')
-                                            ->relationship(
-                                                name: 'permissions',
-                                                titleAttribute: 'description',
-                                                modifyQueryUsing: fn ($query) =>
-                                                    $query->where('name', 'like', '%:LogAktivitas')
-                                            )
-                                            ->columns(2),
-                                    ]),
-                            ]),
+                            ->schema($permissionSections),
                     ]),
             ]);
     }

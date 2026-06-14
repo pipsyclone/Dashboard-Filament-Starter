@@ -11,14 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('log_aktivitas', function (Blueprint $table) {
+        Schema::create('activity_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
-            $table->string('aktivitas');
+            $table->string('activity');
             $table->string('ip_address')->nullable();
-            $table->string('location')->nullable();
             $table->string('user_agent')->nullable();
-            $table->text('keterangan')->nullable();
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('log_aktivitas');
+        Schema::dropIfExists('activity_logs');
     }
 };

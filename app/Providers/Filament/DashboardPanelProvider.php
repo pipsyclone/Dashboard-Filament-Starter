@@ -2,11 +2,13 @@
 
 namespace App\Providers\Filament;
 
+use App\Models\Setting;
+
 use App\Filament\Pages\Auth\Login;
+use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\Profile;
 use App\Filament\Pages\Settings;
-use App\Models\Setting;
-use DiogoGPinto\AuthUIEnhancer\AuthUIEnhancerPlugin;
+
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -14,7 +16,6 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
 use Filament\Navigation\NavigationGroup;
 use Filament\Pages\BasePage;
-use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -31,6 +32,8 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+
+use DiogoGPinto\AuthUIEnhancer\AuthUIEnhancerPlugin;
 use Lunaweb\RecaptchaV3\Facades\RecaptchaV3;
 
 class DashboardPanelProvider extends PanelProvider
@@ -77,9 +80,9 @@ class DashboardPanelProvider extends PanelProvider
                     ->emptyPanelBackgroundImageUrl(safe_image_url($setting?->app_background_login_image)),
             ])
             ->navigationGroups([
-                NavigationGroup::make('Manajemen Pengguna')
+                NavigationGroup::make('User Management')
                     ->icon('heroicon-o-user-group'),
-                NavigationGroup::make('Sistem')
+                NavigationGroup::make('System')
                     ->icon('heroicon-o-cog-6-tooth'),
             ])
             ->userMenuItems([
@@ -88,18 +91,18 @@ class DashboardPanelProvider extends PanelProvider
                     ->url(fn (): string => Profile::getUrl())
                     ->icon(Heroicon::OutlinedUser),
                 MenuItem::make()
-                    ->label('Pengaturan')
+                    ->label('Settings')
                     ->url(fn (): string => Settings::getUrl())
                     ->icon(Heroicon::OutlinedCog6Tooth)
-                    ->visible(fn () => auth()->check() && auth()->user()?->hasPermission('ViewAny:Setting')),
+                    ->visible(fn () => auth()->user()->can('ViewAny', Setting::class)),
             ])
             ->pages([
                 Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-                AccountWidget::class,
-                FilamentInfoWidget::class,
+                // AccountWidget::class,
+                // FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

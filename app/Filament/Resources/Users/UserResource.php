@@ -9,27 +9,25 @@ use App\Filament\Resources\Users\Pages\ViewUser;
 use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Schemas\UserInfolist;
 use App\Filament\Resources\Users\Tables\UsersTable;
-use App\Models\User;
 use BackedEnum;
+use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+
+use App\Models\User;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = null;
+    protected static string|UnitEnum|null $navigationGroup = 'User Management';
+
     public static function canAccess(): bool
     {
-        return auth()->check() && auth()->user()->hasPermission('ViewAny:User');
-    }
-
-    public static function getNavigationGroup(): ?string
-    {
-        return 'Manajemen Pengguna';
+        return auth()->user()->can('viewAny', User::class);
     }
 
     protected static ?string $recordTitleAttribute = 'name';

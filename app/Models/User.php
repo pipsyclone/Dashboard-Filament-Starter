@@ -51,14 +51,10 @@ class User extends Authenticatable
         ];
     }
 
-    public function roles()
+    // Method
+    public function hasRoles($roles): array
     {
-        return $this->belongsToMany(Roles::class, 'user_has_roles', 'user_id', 'role_id');
-    }
-
-    public function hasRole($roles): bool
-    {
-        return $this->roles()->whereIn('slug', (array) $roles)->exists();
+        return $this->roles()->whereIn('slug', (array) $roles)->pluck('slug')->toArray();
     }
 
     public function hasPermission(string $permissionName): bool
@@ -70,23 +66,28 @@ class User extends Authenticatable
             ->exists();
     }
 
-    public function logAktivitas()
-    {
-        return $this->hasMany(LogAktivitas::class);
+    public static function createLog(
+        Request $request,
+        string $activity,
+        ?string $description = null,
+    ): void {
+        ActivityLogs::create([
+            'user_id' => auth()->id(),
+            'activity' => $activity,
+            'ip_address' => $request->ipLocation(),
+            'user_agent' => $request->userAgent(),
+            'description' => $description,
+        ]);
     }
 
-    public static function createLogAktivitas(
-        Request $request,
-        string $aktivitas,
-        ?string $keterangan = null,
-    ): void {
-        LogAktivitas::create([
-            'user_id' => auth()->id(),
-            'aktivitas' => $aktivitas,
-            'ip_address' => $request->realIp(),
-            'location' => $request->ipLocation(),
-            'user_agent' => $request->userAgent(),
-            'keterangan' => $keterangan,
-        ]);
+    // Relationship
+    public function roles()
+    {
+        return $this->belongsToMany(Roles::class, 'user_has_roles', 'user_id', 'role_id');
+    }
+
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLogs::class);
     }
 }

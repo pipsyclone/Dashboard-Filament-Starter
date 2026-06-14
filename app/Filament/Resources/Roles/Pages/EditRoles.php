@@ -26,6 +26,6 @@ class EditRoles extends EditRecord
 
     public function afterSave(): void
     {
-        auth()->user()->createLogAktivitas(request(), 'Mengedit Role', 'Berhasil mengedit role: ' . $this->record->name);
+        auth()->user()->createLog(request(), 'Update Role', 'Successfully updated role: ' . $this->record->name);
     }
 }

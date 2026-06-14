@@ -26,13 +26,13 @@ class DatabaseBackup extends Page implements HasTable
     use InteractsWithTable;
 
     protected string $view = 'filament.pages.database-backup';
-    protected static ?string $navigationLabel = 'Backup Database';
-    protected static ?string $title = 'Backup Database';
-    protected static string|UnitEnum|null $navigationGroup = 'Sistem';
+    protected static ?string $navigationLabel = 'Database Backup';
+    protected static ?string $title = 'Database Backup';
+    protected static string|UnitEnum|null $navigationGroup = 'System';
 
     public static function canAccess(): bool
     {
-        return auth()->check() && auth()->user()->hasPermission('ViewAny:DatabaseBackup');
+        return auth()->user()->can('viewAny', static::class);
     }
 
     public function table(Table $table): Table
@@ -48,14 +48,14 @@ class DatabaseBackup extends Page implements HasTable
             ]))
             ->columns([
                 TextColumn::make('name')
-                    ->label('Nama File')
+                    ->label('File Name')
                     ->searchable(),
 
                 TextColumn::make('size')
-                    ->label('Ukuran'),
+                    ->label('Size'),
 
                 TextColumn::make('date')
-                    ->label('Tanggal Backup'),
+                    ->label('Backup Date'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -66,7 +66,7 @@ class DatabaseBackup extends Page implements HasTable
                             $this->redirect(request()->header('Referer') ?? url()->current()); // refresh table
                         }),
                 ])
-                ->visible(fn () => auth()->check() && auth()->user()->hasPermission('Delete:DatabaseBackup')),
+                ->visible(fn () => auth()->user()->can('delete', static::class)),
             ])
             ->actions([
                 Action::make('download')
@@ -79,7 +79,7 @@ class DatabaseBackup extends Page implements HasTable
                     ->icon('heroicon-o-trash')
                     ->requiresConfirmation()
                     ->color('danger')
-                    ->visible(fn ($record) => auth()->check() && auth()->user()->hasPermission('Delete:DatabaseBackup'))
+                    ->visible(fn ($record) => auth()->user()->can('delete', static::class))
                     ->action(function ($record) {
                         File::delete($record['path']);
                         $this->redirect(request()->header('Referer') ?? url()->current()); // refresh table
@@ -94,10 +94,7 @@ class DatabaseBackup extends Page implements HasTable
                 ->label('Backup Database')
                 ->icon('heroicon-o-cloud-arrow-down')
                 ->requiresConfirmation()
-                ->visible(fn () =>
-                    auth()->check() &&
-                    auth()->user()->hasPermission('Create:DatabaseBackup')
-                )
+                ->visible(fn () => auth()->user()->can('create', static::class))
                 ->action(fn () => $this->backupDatabase()),
         ];
     }

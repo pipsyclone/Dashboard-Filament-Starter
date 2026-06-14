@@ -9,6 +9,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Select;
 
 class UserForm
 {
@@ -16,97 +17,74 @@ class UserForm
     {
         return $schema
             ->components([
-                Section::make('Informasi')
+                Section::make('Information')
                     ->icon('heroicon-o-information-circle')
-                    ->description('Informasi dasar tentang pengguna.')
+                    ->description('Basic information about the user.')
                     ->columnSpanFull()
                     ->schema([
                         TextInput::make('name')
-                            ->label('Nama Pengguna')
-                            ->placeholder('Masukkan nama lengkap pengguna')
-                            ->required()
-                            ->validationMessages([
-                                'required' => 'Nama pengguna wajib diisi.',
-                            ]),
-                        TextInput::make('email')
-                            ->label('Email Pengguna')
-                            ->placeholder('Masukkan alamat email pengguna')
-                            ->email()
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->validationMessages([
-                                'required' => 'Email pengguna wajib diisi.',
-                                'email' => 'Format email tidak valid.',
-                                'unique' => 'Email sudah digunakan oleh pengguna lain.',
-                            ]),
-                        TextInput::make('phone')
-                            ->label('No. Telp Pengguna')
-                            ->placeholder('Masukkan nomor telepon pengguna')
-                            ->tel()
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->validationMessages([
-                                'required' => 'Nomor telepon pengguna wajib diisi.',
-                                'tel' => 'Format nomor telepon tidak valid.',
-                                'unique' => 'Nomor telepon sudah digunakan oleh pengguna lain.',
-                            ]),
+                            ->label('User Name')
+                            ->placeholder('Enter user name')
+                            ->required(),
+                        Grid::make()
+                            ->columns(2)
+                            ->schema([
+                                TextInput::make('email')
+                                    ->label('User Email')
+                                    ->placeholder('Enter user email')
+                                    ->email()
+                                    ->required()
+                                    ->unique(ignoreRecord: true),
+                                TextInput::make('phone')
+                                    ->label('User Phone')
+                                    ->placeholder('Enter user phone number')
+                                    ->tel()
+                                    ->required()
+                                    ->unique(ignoreRecord: true),
+                            ])
                     ]),
-                Section::make('Kredensial')
+                Section::make('Credentials')
                     ->icon('heroicon-o-lock-closed')
-                    ->description('Informasi kredensial untuk autentikasi pengguna.')
+                    ->description('Credentials information for user authentication.')
                     ->columnSpanFull()
                     ->schema([
-                        Toggle::make('ubah_password')
-                            ->label('Ubah Password ?')
+                        Toggle::make('change_password')
+                            ->label('Change Password ?')
                             ->live(),
                         Grid::make()
                             ->columns(2)
-                            ->visible(fn($livewire) => $livewire->data['ubah_password'] ?? false)
+                            ->visible(fn($livewire) => $livewire->data['change_password'] ?? false)
                             ->schema([
                                 TextInput::make('password')
                                     ->label('Password')
-                                    ->placeholder('Masukkan password pengguna')
+                                    ->placeholder('Enter user password')
                                     ->password()
                                     ->revealable()
                                     ->required(fn($livewire) => $livewire instanceof CreateUser)
-                                    ->dehydrated(fn($state) => filled($state))
-                                    ->validationMessages([
-                                        'required' => 'Password pengguna wajib diisi.',
-                                        'min' => 'Password pengguna minimal :min karakter.',
-                                    ]),
+                                    ->dehydrated(fn($state) => filled($state)),
                                 TextInput::make('password_confirmation')
-                                    ->label('Konfirmasi Password')
-                                    ->placeholder('Masukkan konfirmasi password pengguna')
+                                    ->label('Password Confirmation')
+                                    ->placeholder('Enter user password confirmation')
                                     ->password()
                                     ->revealable()
                                     ->required(fn($livewire) => $livewire instanceof CreateUser)
                                     ->dehydrated(false)
-                                    ->same('password')
-                                    ->validationMessages([
-                                        'required' => 'Konfirmasi password pengguna wajib diisi.',
-                                        'same' => 'Konfirmasi password tidak cocok dengan password.',
-                                    ]),
+                                    ->same('password'),
                             ]),
                     ]),
                 Section::make('Roles')
                     ->icon('heroicon-o-user-group')
-                    ->description('Kelola role dan izin pengguna.')
+                    ->description('Manage user roles and permissions.')
                     ->columnSpanFull()
                     ->schema([
-                        Grid::make()
-                            ->columns(2)
-                            ->schema([
-                                CheckboxList::make('roles')
-                                    ->relationship(
-                                        name: 'roles',
-                                        titleAttribute: 'name',
-                                    )
-                                    ->columns(5)
-                                    ->required()
-                                    ->validationMessages([
-                                        'required' => 'Setidaknya satu role harus dipilih.',
-                                    ]),
-                            ]),
+                        Select::make('roles')
+                            ->relationship(
+                                name: 'roles',
+                                titleAttribute: 'name',
+                            )
+                            ->searchable()
+                            ->required()
+                            ->preload(),
                     ]),
             ]);
     }

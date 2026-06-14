@@ -4,16 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class LogAktivitas extends Model
+class ActivityLogs extends Model
 {
-    protected $table = 'log_aktivitas';
+    protected $table = 'activity_logs';
 
     protected $fillable = [
         'user_id',
-        'aktivitas',
+        'activity',
         'ip_address',
         'user_agent',
-        'keterangan',
+        'description',
     ];
 
     public function user()

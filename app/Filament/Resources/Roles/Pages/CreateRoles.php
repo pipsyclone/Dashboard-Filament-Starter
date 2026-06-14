@@ -16,6 +16,6 @@ class CreateRoles extends CreateRecord
 
     public function afterCreate(): void
     {
-        auth()->user()->createLogAktivitas(request(), 'Membuat Role', 'Berhasil membuat role baru: ' . $this->record->name);
+        auth()->user()->createLog(request(), 'Created Role', 'Successfully created a new role: ' . $this->record->name);
     }
 }

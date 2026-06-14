@@ -19,7 +19,7 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Buat Admin User
-        $admin = User::firstOrCreate(
+        $superadmin = User::firstOrCreate(
             ['email' => 'superadmin@example.com'],
             [
                 'name' => 'Superadmin',
@@ -30,10 +30,10 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // Attach role admin
-        $adminRole = Roles::where('slug', 'admin')->first();
-        if ($adminRole) {
-            $admin->roles()->syncWithoutDetaching([$adminRole->id]);
+        // Attach role superadmin
+        $superadminRole = Roles::where('slug', 'superadmin')->first();
+        if ($superadminRole) {
+            $superadmin->roles()->syncWithoutDetaching([$superadminRole->id]);
         }
 
         // Buat Regular User

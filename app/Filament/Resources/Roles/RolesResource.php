@@ -9,27 +9,24 @@ use App\Filament\Resources\Roles\Pages\ViewRoles;
 use App\Filament\Resources\Roles\Schemas\RolesForm;
 use App\Filament\Resources\Roles\Schemas\RolesInfolist;
 use App\Filament\Resources\Roles\Tables\RolesTable;
-use App\Models\Roles;
 use BackedEnum;
+use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+
+use App\Models\Roles;
 
 class RolesResource extends Resource
 {
     protected static ?string $model = Roles::class;
 
     protected static string|BackedEnum|null $navigationIcon = null;
+    protected static string|UnitEnum|null $navigationGroup = 'User Management';
 
     public static function canAccess(): bool
     {
-        return auth()->check() && auth()->user()->hasPermission('ViewAny:Role');
-    }
-
-    public static function getNavigationGroup(): ?string
-    {
-        return 'Manajemen Pengguna';
+        return auth()->user()->can('viewAny', Roles::class);
     }
 
     protected static ?string $recordTitleAttribute = 'name';

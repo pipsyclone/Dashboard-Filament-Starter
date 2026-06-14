@@ -11,26 +11,26 @@ class RolesPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasPermission('ViewAny:Role');
+        return auth()->check() && $user->hasPermission('ViewAny:Roles');
     }
 
     public function view(User $user, $model): bool
     {
-        return $user->hasPermission('View:Role');
+        return auth()->check() && $user->hasPermission('View:Roles');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermission('Create:Role');
+        return auth()->check() && $user->hasPermission('Create:Roles');
     }
 
     public function update(User $user, $model): bool
     {
-        return $user->hasPermission('Update:Role');
+        return auth()->check() && $user->hasPermission('Update:Roles');
     }
 
     public function delete(User $user, $model): bool
     {
-        return $user->hasPermission('Delete:Role');
+        return auth()->check() && $user->hasPermission('Delete:Roles');
     }
 }

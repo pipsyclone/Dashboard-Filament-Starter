@@ -7,7 +7,7 @@ use Illuminate\Validation\ValidationException;
 use Filament\Notifications\Notification;
 use Filament\Auth\Pages\Login as BaseLogin;
 
-use App\Models\LogAktivitas;
+use App\Models\ActivityLogs;
 
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
@@ -32,19 +32,12 @@ class Login extends BaseLogin
                 ->required()
                 ->email()
                 ->autocomplete()
-                ->autofocus()
-                ->validationMessages([
-                    'required' => 'Email tidak boleh kosong.',
-                    'email' => 'Email tidak valid.'
-                ]),
+                ->autofocus(),
             TextInput::make('password')
                 ->label('Password')
                 ->required()
                 ->password()
-                ->autocomplete()
-                ->validationMessages([
-                    'required' => 'Password tidak boleh kosong.',
-                ]),
+                ->autocomplete(),
             ViewField::make('recaptcha')
                 ->view('components.recaptchav3')
                 ->dehydrated(false),
@@ -71,12 +64,12 @@ class Login extends BaseLogin
 
         if (! $token) {
             Notification::make()
-                ->title('Verifikasi reCAPTCHA gagal. Silakan muat ulang halaman.')
+                ->title('Recaptcha verification failed. Please reload the page.')
                 ->danger()
                 ->send();
 
             throw ValidationException::withMessages([
-                'data.email' => 'Verifikasi reCAPTCHA gagal. Token tidak ditemukan.',
+                'data.email' => 'Recaptcha verification failed. Token not found.',
             ]);
         }
 
@@ -84,12 +77,12 @@ class Login extends BaseLogin
 
         if ($score === false || $score < (float) config('recaptchav3.threshold', 0.5)) {
             Notification::make()
-                ->title('Verifikasi reCAPTCHA gagal. Silakan coba lagi.')
+                ->title('Recaptcha verification failed. Please try again.')
                 ->danger()
                 ->send();
 
             throw ValidationException::withMessages([
-                'data.email' => 'Verifikasi reCAPTCHA gagal.',
+                'data.email' => 'Recaptcha verification failed.',
             ]);
         }
 
@@ -97,13 +90,12 @@ class Login extends BaseLogin
 
         // Dipanggil hanya jika login berhasil
         $request = request();
-        LogAktivitas::create([
+        ActivityLogs::create([
             'user_id' => auth()->id(),
-            'aktivitas' => 'Berhasil Login',
+            'activity' => 'Sign In',
             'ip_address' => $request->ip(),
-            'location' => $request->ipLocation(),
             'user_agent' => $request->userAgent(),
-            'keterangan' => 'Berhasil login sebagai '.auth()->user()->name,
+            'description' => 'Sign In successfully as '.auth()->user()->name,
         ]);
 
         return $response;
@@ -112,23 +104,22 @@ class Login extends BaseLogin
     protected function throwFailureValidationException(): never
     {
         Notification::make()
-            ->title('Email / Password anda salah.')
+            ->title('Invalid email or password.')
             ->danger()
             ->send();
 
         $data = $this->form->getState();
         $request = request();
-        LogAktivitas::create([
+        ActivityLogs::create([
             'user_id' => auth()->id(),
-            'aktivitas' => 'Gagal Login',
-            'ip_address' => $request->realIp(),
-            'location' => $request->ipLocation(),
+            'activity' => 'Sign In',
+            'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
-            'keterangan' => 'mencoba login sebagai email: ' . $data['email'],
+            'description' => 'Failed to sign in as ' . $data['email'],
         ]);
 
         throw ValidationException::withMessages([
-            'data.email' => '',
+            'data.email' => 'Invalid email or password.',
         ]);
     }
 }

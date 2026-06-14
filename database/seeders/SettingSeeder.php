@@ -13,9 +13,9 @@ class SettingSeeder extends Seeder
     public function run(): void
     {
         \App\Models\Setting::create([
-            'app_name' => 'Unit Layanan Terpadu',
-            'app_name_short' => 'ULT LLDIKTI XIV',
-            'app_color' => '#00ff91',
+            'app_name' => 'Dashboard Starter',
+            'app_name_short' => 'DS',
+            'app_color' => '#6366f1',
             'app_logo' => null,
             'app_favicon' => null,
             'app_stempel' => null,

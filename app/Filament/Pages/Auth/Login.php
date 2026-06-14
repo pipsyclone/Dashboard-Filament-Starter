@@ -39,7 +39,7 @@ class Login extends BaseLogin
                 ->password()
                 ->autocomplete(),
             ViewField::make('recaptcha')
-                ->view('components.recaptchav3')
+                ->view('filament.components.recaptchav3')
                 ->dehydrated(false),
         ]);
     }

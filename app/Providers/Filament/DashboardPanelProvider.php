@@ -62,7 +62,7 @@ class DashboardPanelProvider extends PanelProvider
             ->viteTheme('resources/css/filament/dashboard/theme.css')
             ->login(Login::class)
             ->favicon(safe_image_url($setting?->app_favicon))
-            ->brandLogo(fn () => view('components.brand-logo', [
+            ->brandLogo(fn () => view('filament.components.brand-logo', [
                 'setting' => $setting,
             ]))
             // ->brandLogoHeight('2rem')
@@ -137,7 +137,7 @@ class DashboardPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
                 fn (): HtmlString => new HtmlString(
-                    view('components.social-links', [
+                    view('filament.components.social-links', [
                         'setting' => Setting::query()->first(),
                     ])->render()
                 )

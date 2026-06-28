@@ -38,7 +38,6 @@ class Profile extends Page
         $this->form->fill([
             'foto' => $user?->foto,
             'name' => $user?->name,
-            'username' => $user?->username,
             'email' => $user?->email,
             'phone' => $user?->phone,
         ]);

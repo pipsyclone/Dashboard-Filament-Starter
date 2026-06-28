@@ -38,29 +38,25 @@ class RolesSeeder extends Seeder
             ],
             'ActivityLogs' => [
                 'ViewAny',
-                'View'
+                'View',
+                'Delete'
             ],
 
             // CRUD
-            'User' => [
-                'ViewAny',
-                'View',
-                'Create',
-                'Update',
-                'Delete',
-            ],
-            'Roles' => [
-                'ViewAny',
-                'View',
-                'Create',
-                'Update',
-                'Delete',
-            ],
+            'User',
+            'Roles',
         ];
 
         $allPermissions = collect();
 
-        foreach ($resources as $resource => $resourceActions) {
+        foreach ($resources as $key => $value) {
+            if (is_numeric($key)) {
+                $resource = $value;
+                $resourceActions = array_keys($actions);
+            } else {
+                $resource = $key;
+                $resourceActions = $value;
+            }
             
             // Buat Policy otomatis jika belum ada
             $policyName = "{$resource}Policy";
@@ -98,31 +94,6 @@ class RolesSeeder extends Seeder
                 'description' => 'Superadministrator dengan akses penuh',
                 // Superadmin mendapatkan semua permission
                 'permissions' => $allPermissions->pluck('id')->toArray(),
-            ],
-            [
-                'name' => 'User',
-                'slug' => 'user',
-                'description' => 'User biasa dengan akses terbatas',
-                // Contoh custom permission untuk User
-                'permissions' => $allPermissions->filter(function ($permission) {
-                    return in_array($permission->slug, [
-                        'view_any_user', 'view_user',
-                        'view_any_role', 'view_role',
-                        'view_any_log_aktivitas',
-                    ]);
-                })->pluck('id')->toArray(),
-            ],
-            [
-                'name' => 'Guest',
-                'slug' => 'guest',
-                'description' => 'Guest hanya bisa melihat',
-                // Contoh custom permission untuk Guest
-                'permissions' => $allPermissions->filter(function ($permission) {
-                    return in_array($permission->slug, [
-                        'view_any_user',
-                        'view_any_role',
-                    ]);
-                })->pluck('id')->toArray(),
             ],
         ];
 

@@ -3,9 +3,12 @@
 namespace App\Filament\Resources\Roles\Pages;
 
 use App\Filament\Resources\Roles\RolesResource;
+use Filament\Resources\Pages\EditRecord;
+
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
-use Filament\Resources\Pages\EditRecord;
+
+use Filament\Notifications\Notification;
 
 class EditRoles extends EditRecord
 {
@@ -24,8 +27,8 @@ class EditRoles extends EditRecord
         return request()->header('Referer') ?? static::getResource()::getUrl('index');
     }
 
-    public function afterSave(): void
+    public function getSavedNotification(): ?Notification
     {
-        auth()->user()->createLog(request(), 'Update Role', 'Successfully updated role: ' . $this->record->name);
+        return null;
     }
 }

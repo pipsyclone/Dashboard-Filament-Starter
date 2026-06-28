@@ -4,7 +4,8 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
-Schedule::command('db:backup')->weekly()->mondays()->at('00:00'); // Menjadwalkan backup database setiap minggu pada pukul 00:00
+Schedule::command('db:backup');
+Schedule::command('app:check-user-activity')->everyMinute();
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\Notifiable;
+use Filament\Notifications\Notification;
 
 class User extends Authenticatable
 {
@@ -22,10 +23,11 @@ class User extends Authenticatable
     protected $fillable = [
         'foto',
         'name',
-        'username',
         'email',
         'phone',
         'password',
+        'status_activity',
+        'last_activity',
     ];
 
     /**
@@ -48,6 +50,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_activity' => 'datetime',
         ];
     }
 

@@ -32,8 +32,10 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use App\Http\Middleware\UpdateUserActivityMiddleware;
 
 use DiogoGPinto\AuthUIEnhancer\AuthUIEnhancerPlugin;
+use Moataz01\FilamentNotificationSound\FilamentNotificationSoundPlugin;
 use Lunaweb\RecaptchaV3\Facades\RecaptchaV3;
 
 class DashboardPanelProvider extends PanelProvider
@@ -49,7 +51,7 @@ class DashboardPanelProvider extends PanelProvider
             $setting = Setting::first();
         }
 
-        $themeColor = $setting?->theme_color ?? '#00ff91';
+        $themeColor = $setting?->app_color ?? '#00ff91';
 
         // Set form actions alignment to the end (right side)
         BasePage::formActionsAlignment(Alignment::End);
@@ -78,6 +80,11 @@ class DashboardPanelProvider extends PanelProvider
                     ->formPanelWidth('30%')
                     ->emptyPanelBackgroundImageOpacity('80%')
                     ->emptyPanelBackgroundImageUrl(safe_image_url($setting?->app_background_login_image)),
+                FilamentNotificationSoundPlugin::make()
+                    // ->soundPath()
+                    ->volume(0.5) // Volume (0.0 to 1.0)
+                    ->showAnimation(true) // Show animation on notification badge
+                    ->enabled(true), // Enable/disable the plugin
             ])
             ->navigationGroups([
                 NavigationGroup::make('User Management')
@@ -114,6 +121,7 @@ class DashboardPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                UpdateUserActivityMiddleware::class
             ])
             ->authMiddleware([
                 Authenticate::class,
@@ -141,13 +149,6 @@ class DashboardPanelProvider extends PanelProvider
                         'setting' => Setting::query()->first(),
                     ])->render()
                 )
-            )
-            ->renderHook(
-                PanelsRenderHook::HEAD_END,
-                fn (): HtmlString => new HtmlString('
-                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-                    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-                ')
             );
     }
 }

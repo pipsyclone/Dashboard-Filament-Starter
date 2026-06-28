@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Roles\Schemas;
 use Illuminate\Support\Str;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Utilities\Get;
 
 use App\Models\Permissions;
 
@@ -20,7 +21,7 @@ class RolesForm
     {
         $permissionSections = [];
         try {
-            $permissions = Permissions::all();
+            $permissions = Permissions::orderBy('id')->get();
             $groupedPermissions = $permissions->groupBy(function ($permission) {
                 $parts = explode(':', $permission->name);
                 return $parts[1] ?? 'Lainnya';
@@ -31,16 +32,22 @@ class RolesForm
                 $title = preg_replace('/(?<!^)[A-Z]/', ' $0', $resource);
                 
                 $permissionSections[] = Section::make($title)
+                    ->hidden(function (Get $get) use ($title) {
+                        $search = $get('search_section');
+                        if (empty($search)) return false;
+                        return ! str_contains(strtolower($title), strtolower($search));
+                    })
                     ->schema([
                         CheckboxList::make("permissions_" . strtolower($resource))
+                            ->hiddenLabel()
                             ->relationship(
                                 name: 'permissions',
                                 titleAttribute: 'description',
                                 modifyQueryUsing: fn ($query) =>
-                                    $query->where('name', 'like', "%:{$resource}")
+                                    $query->where('name', 'like', "%:{$resource}")->orderBy('id')
                             )
                             ->bulkToggleable()
-                            ->columns(2),
+                            ->columns(7),
                     ]);
             }
         } catch (\Exception $e) {
@@ -65,6 +72,7 @@ class RolesForm
                                     ->label('Slug Role')
                                     ->placeholder('contoh: super_admin, admin, guest, visitor, dll.')
                                     ->required()
+                                    ->disabled(fn (string $operation): bool => $operation === 'edit')
                                     ->unique(ignoreRecord: true)
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function (Set $set, ?string $state) {
@@ -81,8 +89,14 @@ class RolesForm
                 Section::make('Access Permissions')
                     ->columnSpanFull()
                     ->schema([
+                        TextInput::make('search_section')
+                            ->hiddenLabel()
+                            ->placeholder('Search Module by Name...')
+                            ->prefixIcon('heroicon-m-magnifying-glass')
+                            ->live(debounce: 300)
+                            ->dehydrated(false),
                         Grid::make()
-                            ->columns(3)
+                            ->columns(1)
                             ->schema($permissionSections),
                     ]),
             ]);

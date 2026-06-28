@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\File;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Filament\Pages\Page;
+use App\Traits\LogActivityTrait;
 
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
@@ -17,13 +18,14 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Concerns\InteractsWithTable;
 
 use Filament\Actions\Action;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\DeleteAction;
 
 class DatabaseBackup extends Page implements HasTable
 {
-    use InteractsWithTable;
+    use InteractsWithTable, LogActivityTrait;
 
     protected string $view = 'filament.pages.database-backup';
     protected static ?string $navigationLabel = 'Database Backup';
@@ -37,8 +39,14 @@ class DatabaseBackup extends Page implements HasTable
 
     public function table(Table $table): Table
     {
+        $backupDir = storage_path('app/backups');
+
+        if (! File::exists($backupDir)) {
+            File::makeDirectory($backupDir, 0755, true);
+        }
+
         return $table
-            ->records(fn () => collect(File::files(storage_path('app/backups')))
+            ->records(fn () => collect(File::files($backupDir))
             ->sortByDesc(fn ($file) => $file->getCTime())
             ->map(fn ($file) => [
                 'name' => $file->getFilename(),
@@ -69,21 +77,29 @@ class DatabaseBackup extends Page implements HasTable
                 ->visible(fn () => auth()->user()->can('delete', static::class)),
             ])
             ->actions([
-                Action::make('download')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->color('primary')
-                    ->url(fn ($record) => route('backup.download', $record['name']))
-                    ->openUrlInNewTab(),
+                ActionGroup::make([
+                    Action::make('download')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('primary')
+                        ->url(fn ($record) => route('backup.download', $record['name']))
+                        ->openUrlInNewTab(),
 
-                Action::make('delete')
-                    ->icon('heroicon-o-trash')
-                    ->requiresConfirmation()
-                    ->color('danger')
-                    ->visible(fn ($record) => auth()->user()->can('delete', static::class))
-                    ->action(function ($record) {
-                        File::delete($record['path']);
-                        $this->redirect(request()->header('Referer') ?? url()->current()); // refresh table
-                    }),
+                    Action::make('delete')
+                        ->icon('heroicon-o-trash')
+                        ->requiresConfirmation()
+                        ->color('danger')
+                        ->visible(fn ($record) => auth()->user()->can('delete', static::class))
+                        ->action(function ($record) {
+                            File::delete($record['path']);
+                            Notification::make()
+                                ->title('Success')
+                                ->body($record['name'] . ' deleted successfully.')
+                                ->success()
+                                ->send();
+                            $this->logActivity('Delete Database Backup', $record['name'] . ' deleted successfully.');
+                            $this->redirect(request()->header('Referer') ?? url()->current()); // refresh table
+                        }),
+                ])
             ]);
     }
 
@@ -134,27 +150,33 @@ class DatabaseBackup extends Page implements HasTable
             if ($result !== 0 || ! File::exists($gzFile)) {
 
                 Notification::make()
-                    ->title('Backup database gagal')
+                    ->title('Error')
+                    ->body('Please check your database connection settings.')
                     ->danger()
                     ->send();
 
+                $this->logActivity('Backup Database', 'Failed to backup database, Please check your database connection settings.');
                 return;
             }
 
             $this->cleanOldBackups($backupDir);
 
             Notification::make()
-                ->title('Backup database berhasil dibuat')
+                ->title('Success')
+                ->body('Backup database successfully created.')
                 ->success()
                 ->send();
 
+            $this->logActivity('Backup Database', 'Backup database successfully created.');
         } catch (\Throwable $e) {
-
             Notification::make()
-                ->title('Error backup database')
+                ->title('Error')
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
+            \Log::error($e->getMessage());
+
+            $this->logActivity('Backup Database', 'Failed to backup database: ' . $e->getMessage());
         }
     }
 
@@ -171,5 +193,7 @@ class DatabaseBackup extends Page implements HasTable
             ->each(fn ($file) =>
                 File::delete($file->getRealPath())
             );
+
+        $this->logActivity('Delete Old Backup Database', 'Old database backups cleaned successfully.');
     }
 }

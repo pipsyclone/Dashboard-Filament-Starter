@@ -50,24 +50,25 @@ class UserForm
                     ->schema([
                         Toggle::make('change_password')
                             ->label('Change Password ?')
+                            ->visible(fn (string $operation): bool => $operation === 'edit')
                             ->live(),
                         Grid::make()
                             ->columns(2)
-                            ->visible(fn($livewire) => $livewire->data['change_password'] ?? false)
+                            ->visible(fn (string $operation, \Filament\Schemas\Components\Utilities\Get $get): bool => $operation === 'create' || $get('change_password'))
                             ->schema([
                                 TextInput::make('password')
                                     ->label('Password')
                                     ->placeholder('Enter user password')
                                     ->password()
                                     ->revealable()
-                                    ->required(fn($livewire) => $livewire instanceof CreateUser)
-                                    ->dehydrated(fn($state) => filled($state)),
+                                    ->required(fn (string $operation, \Filament\Schemas\Components\Utilities\Get $get): bool => $operation === 'create' || $get('change_password'))
+                                    ->dehydrated(fn (?string $state) => filled($state)),
                                 TextInput::make('password_confirmation')
                                     ->label('Password Confirmation')
                                     ->placeholder('Enter user password confirmation')
                                     ->password()
                                     ->revealable()
-                                    ->required(fn($livewire) => $livewire instanceof CreateUser)
+                                    ->required(fn (string $operation, \Filament\Schemas\Components\Utilities\Get $get): bool => $operation === 'create' || $get('change_password'))
                                     ->dehydrated(false)
                                     ->same('password'),
                             ]),

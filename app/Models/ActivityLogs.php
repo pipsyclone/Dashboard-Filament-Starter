@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ActivityLogs extends Model
 {
+    use SoftDeletes;
+    
     protected $table = 'activity_logs';
 
     protected $fillable = [

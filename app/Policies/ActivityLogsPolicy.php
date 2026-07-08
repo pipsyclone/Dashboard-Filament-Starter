@@ -23,4 +23,29 @@ class ActivityLogsPolicy
     {
         return auth()->check() && $user->hasPermission('Delete:ActivityLogs');
     }
+
+    public function deleteAny(User $user): bool
+    {
+        return auth()->check() && $user->hasPermission('DeleteAny:ActivityLogs');
+    }
+
+    public function restore(User $user): bool
+    {
+        return auth()->check() && $user->hasPermission('Restore:ActivityLogs');
+    }
+
+    public function restoreAny(User $user): bool
+    {
+        return auth()->check() && $user->hasPermission('RestoreAny:ActivityLogs');
+    }
+
+    public function forceDelete(User $user): bool
+    {
+        return auth()->check() && $user->hasPermission('ForceDelete:ActivityLogs');
+    }
+
+    public function forceDeleteAny(User $user): bool
+    {
+        return auth()->check() && $user->hasPermission('ForceDeleteAny:ActivityLogs');
+    }
 }

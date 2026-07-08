@@ -21,9 +21,17 @@ class RolesSeeder extends Seeder
             'View'    => 'View',
             'Create'  => 'Create',
             'Update'  => 'Update',
+
             'Delete'  => 'Delete',
+            'DeleteAny' => 'Bulk Delete',
+
             'Restore' => 'Restore',
+            'RestoreAny' => 'Bulk Restore',
+
             'ForceDelete' => 'Force Delete',
+            'ForceDeleteAny' => 'Bulk Force Delete',
+
+            'Replicate' => 'Duplicate',
         ];
 
         $resources = [
@@ -39,7 +47,12 @@ class RolesSeeder extends Seeder
             'ActivityLogs' => [
                 'ViewAny',
                 'View',
-                'Delete'
+                'Delete',
+                'DeleteAny',
+                'Restore',
+                'RestoreAny',
+                'ForceDelete',
+                'ForceDeleteAny',
             ],
 
             // CRUD

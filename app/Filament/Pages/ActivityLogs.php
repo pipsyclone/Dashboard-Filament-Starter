@@ -8,6 +8,8 @@ use Filament\Support\Icons\Heroicon;
 use App\Models\ActivityLogs as ActivityLogsModel;
 use Filament\Notifications\Notification;
 use App\Traits\LogActivityTrait;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 use Filament\Pages\Page;
 use Filament\Tables\Contracts\HasTable;
@@ -16,7 +18,19 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 
+use Filament\Tables\Filters\TrashedFilter;
+
 use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\ForceDeleteAction;
 
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
@@ -91,6 +105,9 @@ class ActivityLogs extends Page implements HasTable
                     ->dateTime('d M Y, H:i')
                     ->sortable(),
             ])
+            ->filters([
+                TrashedFilter::make()
+            ])
             ->actions([
                 Action::make('view')
                     ->visible(fn () => auth()->user()->can('view', static::class))
@@ -114,6 +131,22 @@ class ActivityLogs extends Page implements HasTable
                     ->modalWidth('lg')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close'),
+                DeleteAction::make(),
+                RestoreAction::make(),
+                ForceDeleteAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
             ]);
     }
 }

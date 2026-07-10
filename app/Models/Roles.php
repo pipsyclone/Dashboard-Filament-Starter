@@ -5,10 +5,11 @@ use App\Traits\LogActivityTrait;
 
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Roles extends Model
 {
-    use LogActivityTrait;
+    use LogActivityTrait, SoftDeletes;
 
     protected $table = 'roles';
     protected $fillable = [

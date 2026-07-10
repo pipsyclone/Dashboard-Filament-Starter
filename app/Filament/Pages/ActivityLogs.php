@@ -8,8 +8,6 @@ use Filament\Support\Icons\Heroicon;
 use App\Models\ActivityLogs as ActivityLogsModel;
 use Filament\Notifications\Notification;
 use App\Traits\LogActivityTrait;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 use Filament\Pages\Page;
 use Filament\Tables\Contracts\HasTable;
@@ -139,14 +137,6 @@ class ActivityLogs extends Page implements HasTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
             ]);
     }
 }

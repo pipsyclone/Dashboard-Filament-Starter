@@ -9,10 +9,6 @@ class SettingPolicy
 {
     use HandlesAuthorization;
 
-    /**
-     * Determine whether the user can view any models.
-     */
-
     public function viewAny(User $user): bool
     {
         return auth()->check() && $user->hasPermission('ViewAny:Setting');

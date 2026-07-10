@@ -23,6 +23,8 @@ return new class extends Migration
             $table->datetime('last_activity')->nullable();
             $table->rememberToken();
             $table->timestamps();
+
+            $table->softDeletes();  // For soft deletes
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

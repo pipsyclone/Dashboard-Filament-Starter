@@ -3,15 +3,21 @@
 namespace App\Filament\Resources\Roles\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
 
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\RestoreAction;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\ForceDeleteAction;
 
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
+
+use Filament\Tables\Filters\TrashedFilter;
 
 class RolesTable
 {
@@ -30,18 +36,22 @@ class RolesTable
                     ->alignCenter(),
             ])
             ->filters([
-                //
+                TrashedFilter::make(),
             ])
             ->recordActions([
+                ViewAction::make(),
                 ActionGroup::make([
-                    ViewAction::make(),
                     EditAction::make(),
+                    RestoreAction::make(),
                     DeleteAction::make(),
+                    ForceDeleteAction::make(),
                 ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    RestoreBulkAction::make(),
                     DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
                 ]),
             ]);
     }

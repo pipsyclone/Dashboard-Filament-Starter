@@ -17,6 +17,7 @@ use Filament\Actions\ForceDeleteAction;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Filters\SelectFilter;
 
 class UsersTable
@@ -24,9 +25,9 @@ class UsersTable
     public static function configure(Table $table): Table
     {
         return $table
-            // ->modifyQueryUsing(function ($query) {
-            //     return $query->with('roles');
-            // })
+            ->modifyQueryUsing(function ($query) {
+                return $query->latest();
+            })
             ->poll('10s')
             ->deferLoading()
             ->columns([
@@ -73,6 +74,7 @@ class UsersTable
                     ->toggleable(isToggledHiddenByDefault: false),
             ])
             ->filters([
+                TrashedFilter::make(),
                 SelectFilter::make('roles')->relationship('roles', 'name')->multiple(),
                 SelectFilter::make('status_activity')->options([
                     'online' => 'Online',
@@ -81,8 +83,8 @@ class UsersTable
                 ]),
             ])
             ->recordActions([
+                ViewAction::make(),
                 ActionGroup::make([
-                    ViewAction::make(),
                     EditAction::make(),
                     RestoreAction::make(),
                     DeleteAction::make(),

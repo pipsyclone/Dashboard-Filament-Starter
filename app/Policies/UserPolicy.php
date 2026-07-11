@@ -34,4 +34,29 @@ class UserPolicy
     {
         return auth()->check() && $authUser->hasPermission('Delete:User');
     }
+
+    public function deleteAny(AuthUser $authUser): bool
+    {
+        return auth()->check() && $authUser->hasPermission('DeleteAny:User');
+    }
+
+    public function restore(AuthUser $authUser, User $user): bool
+    {
+        return auth()->check() && $authUser->hasPermission('Restore:User');
+    }
+
+    public function restoreAny(AuthUser $authUser): bool
+    {
+        return auth()->check() && $authUser->hasPermission('RestoreAny:User');
+    }
+
+    public function forceDelete(AuthUser $authUser, User $user): bool
+    {
+        return auth()->check() && $authUser->hasPermission('ForceDelete:User');
+    }
+
+    public function forceDeleteAny(AuthUser $authUser): bool
+    {
+        return auth()->check() && $authUser->hasPermission('ForceDeleteAny:User');
+    }
 }

@@ -70,8 +70,8 @@ class RolesTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
+                ViewAction::make(),
                 ActionGroup::make([
-                    ViewAction::make(),
                     EditAction::make(),
                     RestoreAction::make(),
                     DeleteAction::make(),

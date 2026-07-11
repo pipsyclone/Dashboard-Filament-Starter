@@ -5,10 +5,11 @@ use App\Traits\LogActivityTrait;
 
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Roles extends Model
 {
-    use LogActivityTrait;
+    use LogActivityTrait, SoftDeletes;
 
     protected $table = 'roles';
     protected $fillable = [
@@ -68,6 +69,7 @@ class Roles extends Model
                     ->send();
 
                 $model->logActivity('delete', 'The role has been deleted successfully.');
+                return;
             } catch (\Exception $e) {
                 Notification::make()
                     ->title('Error')
@@ -76,6 +78,7 @@ class Roles extends Model
                     ->send();
                 
                 \Log::error('Role delete failed: ' . $e->getMessage());
+                return;
             }
         });
     }

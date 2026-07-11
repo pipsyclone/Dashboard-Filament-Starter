@@ -9,6 +9,8 @@ use App\Filament\Resources\Roles\Pages\ViewRoles;
 use App\Filament\Resources\Roles\Schemas\RolesForm;
 use App\Filament\Resources\Roles\Schemas\RolesInfolist;
 use App\Filament\Resources\Roles\Tables\RolesTable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use BackedEnum;
 use UnitEnum;
 use Filament\Resources\Resource;
@@ -68,5 +70,13 @@ class RolesResource extends Resource
             'view' => ViewRoles::route('/{record}'),
             'edit' => EditRoles::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 }

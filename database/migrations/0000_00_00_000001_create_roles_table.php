@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('slug')->unique();  // admin, user, guest
             $table->text('description')->nullable();
             $table->timestamps();
+
+            $table->softDeletes(); // Add this line for soft deletes
         });
     }
 

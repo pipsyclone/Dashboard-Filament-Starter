@@ -11,8 +11,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-use Illuminate\Database\Eloquent\SoftDeletes;
-
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */

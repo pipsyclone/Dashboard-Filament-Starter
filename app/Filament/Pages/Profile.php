@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
+use App\Traits\LogActivityTrait;
 
 use App\Models\User;
 
@@ -24,6 +25,8 @@ use Filament\Notifications\Notification;
 
 class Profile extends Page
 {
+    use LogActivityTrait;
+
     protected string $view = 'filament.pages.profile';
     protected static ?string $title = 'Profil Pengguna';
     protected static ?string $slug = 'profile';
@@ -63,61 +66,42 @@ class Profile extends Page
                                     ->imageEditor()
                                     ->alignCenter()
                                     ->maxSize(2048)
-                                    ->validationMessages([
-                                        'image' => 'File yang diunggah harus berupa gambar.',
-                                        'max' => 'Ukuran file tidak boleh lebih dari 2MB.',
-                                    ])
                                     ->deleteUploadedFileUsing(function (string $file) {
                                         Storage::disk('public')->delete($file);
                                     }),
                             ]),
-                        Section::make('Informasi Pribadi')
-                            ->description('Perbarui informasi profil Anda di sini.')
+                        Section::make('Personal Information')
+                            ->description('Update your personal information here.')
                             ->icon('heroicon-o-user')
                             ->schema([
                                 TextInput::make('name')
-                                    ->label('Nama Lengkap')
-                                    ->required()
-                                    ->validationMessages([
-                                        'required' => 'Nama lengkap wajib diisi.',
-                                    ]),
+                                    ->label('Full Name')
+                                    ->required(),
                                 Grid::make()
                                     ->columns(2)
                                     ->schema([
                                         TextInput::make('email')
-                                            ->label('Email')
+                                            ->label('Email Address')
                                             ->email()
-                                            ->required()
-                                            ->validationMessages([
-                                                'required' => 'Email wajib diisi.',
-                                                'email' => 'Format email tidak valid.',
-                                            ]),
+                                            ->required(),
                                         TextInput::make('phone')
-                                            ->label('Nomor Telepon')
+                                            ->label('Phone Number')
                                             ->tel()
-                                            ->required()
-                                            ->validationMessages([
-                                                'required' => 'Nomor telepon wajib diisi.',
-                                                'tel' => 'Format nomor telepon tidak valid.',
-                                            ]),
+                                            ->required(),
                                     ]),
                             ]),
-                        Section::make('Keamanan')
-                            ->description('Anda dapat memperbarui password Anda di sini. Biarkan kosong jika tidak ingin mengubah password.')
+                        Section::make('Security & Password')
+                            ->description('Update your password and security settings here.')
                             ->icon('heroicon-o-lock-closed')
                             ->columnSpanFull()
                             ->schema([
                                 TextInput::make('current_password')
-                                    ->label('Password Saat Ini')
+                                    ->label('Current Password')
                                     ->password()
                                     ->revealable()
                                     ->required(fn ($get) => filled($get('password')))
                                     ->currentPassword()
-                                    ->dehydrated(false)
-                                    ->validationMessages([
-                                        'required' => 'Password saat ini wajib diisi.',
-                                        'current_password' => 'Password saat ini tidak cocok.',
-                                    ]),
+                                    ->dehydrated(false),
                                 Grid::make()
                                     ->columns(2)
                                     ->schema([
@@ -127,22 +111,14 @@ class Profile extends Page
                                             ->revealable()
                                             ->required(fn ($livewire) => $livewire instanceof CreateUser)
                                             ->dehydrated(fn ($state) => filled($state))
-                                            ->minLength(8)
-                                            ->validationMessages([
-                                                'required' => 'Password wajib diisi.',
-                                                'minLength' => 'Password minimal :min karakter.',
-                                            ]),
+                                            ->minLength(8),
                                         TextInput::make('password_confirmation')
-                                            ->label('Konfirmasi Password')
+                                            ->label('Confirm Password')
                                             ->password()
                                             ->revealable()
                                             ->required(fn ($get) => filled($get('password')))
                                             ->dehydrated(false)
-                                            ->same('password')
-                                            ->validationMessages([
-                                                'required' => 'Konfirmasi password wajib diisi.',
-                                                'same' => 'Konfirmasi password tidak cocok dengan password.',
-                                            ]),
+                                            ->same('password'),
                                     ]),
                             ]),
                     ]),
@@ -153,7 +129,7 @@ class Profile extends Page
     {
         return [
             Action::make('save')
-                ->label('Simpan')
+                ->label('Save Changes')
                 ->submit('save'),
         ];
     }
@@ -171,11 +147,11 @@ class Profile extends Page
         }
 
         $user->update($data);
-        $user->createLogAktivitas('Memperbarui profil pengguna', 'Berhasil memperbarui informasi profilnya.');
+        $this->logActivity('Update Profile', 'The user profile has been updated successfully.');
 
         Notification::make()
             ->success()
-            ->title('Profil berhasil diperbarui.')
+            ->title('Profile updated successfully.')
             ->send();
 
         // Redirect kembali ke halaman profil setelah menyimpan

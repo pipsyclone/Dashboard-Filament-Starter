@@ -19,6 +19,7 @@ class Setting extends Model
     protected $fillable = [
         'app_name',
         'app_name_short',
+        'app_description',
         'app_color',
         'app_logo',
         'app_favicon',

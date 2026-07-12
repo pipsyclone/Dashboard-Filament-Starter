@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('foto')->nullable();
             $table->string('name');
             $table->string('email')->unique();
-            $table->string('phone')->nullable();
+            $table->string('phone')->nullable()->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->enum('status_activity', ['online', 'idle', 'offline'])->default('offline');

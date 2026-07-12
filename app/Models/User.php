@@ -3,15 +3,21 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Filament\Panel;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
+use Filament\Models\Contracts\HasName;
+
 use Database\Factories\UserFactory;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser, HasAvatar, HasName
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
@@ -56,6 +62,29 @@ class User extends Authenticatable
     }
 
     // Methods
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return true; // Allow all users to access the panel for now
+    }
+
+    public function getFilamentAvatarUrl(): ?string
+    {
+        if (! $this->foto) {
+            return null;
+        }
+
+        if (str_starts_with($this->foto, 'http')) {
+            return $this->foto;
+        }
+
+        return Storage::disk('public')->url($this->foto);
+    }
+
+    public function getFilamentName(): string
+    {
+        return "{$this->name}";
+    }
+
     public function hasRoles($roles): array
     {
         return $this->roles()->whereIn('slug', (array) $roles)->pluck('slug')->toArray();

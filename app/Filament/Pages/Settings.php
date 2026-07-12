@@ -18,13 +18,14 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\Textarea;
 
 use Filament\Notifications\Notification;
 
 class Settings extends Page
 {
     protected string $view = 'filament.pages.settings';
-    protected static ?string $title = 'Pengaturan Aplikasi';
+    protected static ?string $title = 'Application Settings';
     protected static ?string $slug = 'setting';
 
     // Sembunyikan dari sidebar
@@ -40,9 +41,9 @@ class Settings extends Page
     {
         $setting = Setting::first();
         $this->form->fill([
-            'app_name'                    => $setting?->app_name ?? 'Unit Layanan Terpadu',
-            'app_name_short'              => $setting?->app_name_short ?? 'ULT LLDIKTI XIV',
-            'app_color'                   => $setting?->app_color ?? '#00ff91',
+            'app_name'                    => $setting?->app_name ?? 'App Name Here',
+            'app_name_short'              => $setting?->app_name_short ?? 'App Name Short Here',
+            'app_color'                   => $setting?->app_color ?? '#6366f1',
             'app_logo'                    => is_array($setting?->app_logo)
                                                 ? $setting->app_logo
                                                 : (is_string($setting?->app_logo) && !empty($setting->app_logo)
@@ -68,124 +69,105 @@ class Settings extends Page
                 Grid::make()
                     ->columns(2)
                     ->schema([
-                        Section::make('Informasi Aplikasi')
+                        Section::make('Application Information')
+                            ->description('Basic application settings such as name and short name.')
+                            ->icon('heroicon-o-information-circle')
                             ->schema([
-                                TextInput::make('app_name')
-                                    ->label('Nama Aplikasi')
-                                    ->required()
-                                    ->validationMessages([
-                                        'required' => 'Nama aplikasi wajib diisi.',
+                                Grid::make()
+                                    ->columns(2)
+                                    ->schema([
+                                        TextInput::make('app_name')
+                                            ->label('Application Name')
+                                            ->required(),
+                                        TextInput::make('app_name_short')
+                                            ->label('Short Name')
+                                            ->required(),
                                     ]),
-                                TextInput::make('app_name_short')
-                                    ->label('Nama Singkat Aplikasi')
-                                    ->required()
-                                    ->validationMessages([
-                                        'required' => 'Nama singkat aplikasi wajib diisi.',
-                                    ]),
+                                Textarea::make('app_description')
+                                    ->label('Application Description')
+                                    ->rows(3)
+                                    ->maxLength(255)
+                                    ->placeholder('Enter a brief description of the application.'),
                             ]),
-                        Section::make('Tampilan Aplikasi')
+                        Section::make('Appearance')
+                            ->description('Customize primary color and visual appearance of the application.')
+                            ->icon('heroicon-o-swatch')
                             ->schema([
                                 ColorPicker::make('app_color')
-                                    ->label('Warna Utama Aplikasi')
-                                    ->required()
-                                    ->validationMessages([
-                                        'required' => 'Warna utama aplikasi wajib diisi.',
-                                    ]),
+                                            ->label('Primary Color')
+                                            ->required(),
                             ]),
                     ]),
                 Section::make('Media')
+                    ->description('Upload application logo, favicon, and login background images.')
+                    ->icon('heroicon-o-photo')
                     ->schema([
                         Grid::make()
                             ->columns(3)
                             ->schema([
                                 FileUpload::make('app_logo')
-                                    ->label('Logo Aplikasi')
+                                    ->label('Application Logo')
                                     ->disk('public')
                                     ->directory('settings')
                                     ->image()
                                     ->multiple()
-                                    ->reorderable()      // bisa diurutkan
+                                    ->reorderable()
                                     ->maxSize(2048)
                                     ->acceptedFileTypes(['image/*'])
-                                    ->helperText('Rekomendasi ukuran: 512x512px. Maksimal 2MB.')
-                                    ->validationMessages([
-                                        'image' => 'File yang diunggah harus berupa gambar.',
-                                        'max' => 'Ukuran file tidak boleh lebih dari 2MB.',
-                                    ])
+                                    ->helperText('Recommended size: 512x512px. Max 2MB.')
                                     ->deleteUploadedFileUsing(function (string $file) {
                                         Storage::disk('public')->delete($file);
                                     }),
                                 FileUpload::make('app_favicon')
-                                    ->label('Favicon Aplikasi')
+                                    ->label('Application Favicon')
                                     ->disk('public')
                                     ->directory('settings')
                                     ->image()
                                     ->maxSize(2048)
                                     ->acceptedFileTypes(['image/*'])
-                                    ->helperText('Rekomendasi ukuran: 192x192px. Maksimal 2MB.')
-                                    ->validationMessages([
-                                        'image' => 'File yang diunggah harus berupa gambar.',
-                                        'max' => 'Ukuran file tidak boleh lebih dari 2MB.',
-                                    ]),
+                                    ->helperText('Recommended size: 192x192px. Max 2MB.'),
                                 FileUpload::make('app_background_login_image')
-                                    ->label('Background Login')
+                                    ->label('Login Background')
                                     ->disk('public')
                                     ->directory('settings')
                                     ->image()
                                     ->maxSize(2048)
                                     ->acceptedFileTypes(['image/*'])
-                                    ->helperText('Rekomendasi ukuran: 1200x800px. Maksimal 2MB.')
-                                    ->validationMessages([
-                                        'image' => 'File yang diunggah harus berupa gambar.',
-                                        'max' => 'Ukuran file tidak boleh lebih dari 2MB.',
-                                    ]),
+                                    ->helperText('Recommended size: 1200x800px. Max 2MB.'),
                             ]),
                     ]),
-                Section::make('Media Sosial')
+                Section::make('Social Media')
+                    ->description('Manage social media links for the application.')
+                    ->icon('heroicon-o-share')
                     ->schema([
                         Grid::make()
                             ->columns(2)
                             ->schema([
                                 TextInput::make('youtube_link')
-                                    ->label('Link YouTube')
+                                    ->label('YouTube Link')
                                     ->url()
-                                    ->placeholder('https://www.youtube.com/channel/...')
-                                    ->validationMessages([
-                                        'url' => 'Format URL tidak valid.',
-                                    ]),
+                                    ->placeholder('https://www.youtube.com/channel/...'),
                                 TextInput::make('instagram_link')
-                                    ->label('Link Instagram')
+                                    ->label('Instagram Link')
                                     ->url()
-                                    ->placeholder('https://www.instagram.com/...')
-                                    ->validationMessages([
-                                        'url' => 'Format URL tidak valid.',
-                                    ]),
+                                    ->placeholder('https://www.instagram.com/...'),
                             ]),
                         Grid::make()
                             ->columns(2)
                             ->schema([
                                 TextInput::make('tiktok_link')
-                                    ->label('Link TikTok')
+                                    ->label('TikTok Link')
                                     ->url()
-                                    ->placeholder('https://www.tiktok.com/@...')
-                                    ->validationMessages([
-                                        'url' => 'Format URL tidak valid.',
-                                    ]),
+                                    ->placeholder('https://www.tiktok.com/@...'),
                                 TextInput::make('facebook_link')
-                                    ->label('Link Facebook')
+                                    ->label('Facebook Link')
                                     ->url()
-                                    ->placeholder('https://www.facebook.com/...')
-                                    ->validationMessages([
-                                        'url' => 'Format URL tidak valid.',
-                                    ]),
+                                    ->placeholder('https://www.facebook.com/...'),
                             ]),
                         TextInput::make('x_twitter_link')
-                            ->label('Link X (Twitter)')
+                            ->label('X (Twitter) Link')
                             ->url()
                             ->placeholder('https://twitter.com/...')
-                            ->validationMessages([
-                                'url' => 'Format URL tidak valid.',
-                            ])
                             ->columnSpanFull(),
                     ]),
             ]);
@@ -194,8 +176,8 @@ class Settings extends Page
     protected function getFormActions(): array
     {
         return [
-            Action::make('save')
-                ->label('Simpan')
+                Action::make('save')
+                ->label('Save Changes')
                 ->submit('save'),
         ];
     }

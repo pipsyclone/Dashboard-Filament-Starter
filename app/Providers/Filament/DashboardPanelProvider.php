@@ -8,6 +8,7 @@ use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\Profile;
 use App\Filament\Pages\Settings;
+use App\Filament\Pages\BroadcastNotifications;
 
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -94,7 +95,7 @@ class DashboardPanelProvider extends PanelProvider
             ])
             ->userMenuItems([
                 MenuItem::make()
-                    ->label('Profile')
+                    ->label('My Profile')
                     ->url(fn (): string => Profile::getUrl())
                     ->icon(Heroicon::OutlinedUser),
                 MenuItem::make()
@@ -102,6 +103,11 @@ class DashboardPanelProvider extends PanelProvider
                     ->url(fn (): string => Settings::getUrl())
                     ->icon(Heroicon::OutlinedCog6Tooth)
                     ->visible(fn () => auth()->user()->can('ViewAny', Setting::class)),
+                MenuItem::make()
+                    ->label('Broadcast Notifications')
+                    ->url(fn (): string => BroadcastNotifications::getUrl())
+                    ->icon(Heroicon::OutlinedSpeakerWave)
+                    ->visible(fn () => true),
             ])
             ->pages([
                 Dashboard::class,

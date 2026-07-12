@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('app_name')->default('Unit Layanan Terpadu');
             $table->string('app_name_short')->default('LLDIKTI XIV');
+            $table->string('app_description')->nullable();
             $table->string('app_color')->default('#4F46E5');
             $table->json('app_logo')->nullable();
             $table->string('app_favicon')->nullable();
